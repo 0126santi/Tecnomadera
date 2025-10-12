@@ -50,7 +50,7 @@ export default function CarritoPage() {
                       <span className="font-medium text-neutral-900 text-sm whitespace-pre-line">{item.name}</span>
                     </td>
                     <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3">
-                      <div className="block sm:inline mb-2 sm:mb-0">€{item.price.toFixed(2)}</div>
+                      <div className="block sm:inline mb-2 sm:mb-0">${item.price.toFixed(2)}</div>
                     </td>
                     <td className="sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3">
                       <div className="block sm:inline mb-2 sm:mb-0">
@@ -62,7 +62,7 @@ export default function CarritoPage() {
                       </div>
                     </td>
                     <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3">
-                      <div className="block sm:inline mb-2 sm:mb-0">€{(item.price * item.quantity).toFixed(2)}</div>
+                      <div className="block sm:inline mb-2 sm:mb-0 mt-2 sm:mt-0">${(item.price * item.quantity).toFixed(2)}</div>
                     </td>
                   </tr>
                 ))}
@@ -86,12 +86,12 @@ export default function CarritoPage() {
             <h3 className="text-lg font-bold text-neutral-900 mb-2">TOTALES DEL CARRITO</h3>
             <div className="flex justify-between text-neutral-700 text-base">
               <span>Subtotal</span>
-              <span>€{subtotal.toFixed(2)}</span>
+              <span>${subtotal.toFixed(2)}</span>
             </div>
             <hr />
             <div className="flex justify-between text-neutral-900 text-lg font-bold">
               <span>Total</span>
-              <span>€{subtotal.toFixed(2)}</span>
+              <span>${subtotal.toFixed(2)}</span>
             </div>
             <button
               className="mt-4 px-6 py-3 rounded font-medium transition"
@@ -101,8 +101,8 @@ export default function CarritoPage() {
                 const numeroWhatsapp = '584244446227';
                 const mensaje = encodeURIComponent(
                   "Hola, quiero comprar:\n" +
-                  cart.map(p => `- ${p.name} (${p.quantity} unidades) - €${(p.price * p.quantity).toFixed(2)}`).join('\n') +
-                  `\nTotal: €${subtotal.toFixed(2)}`
+                  cart.map(p => `- ${p.name} (${p.quantity} unidades) - $${(p.price * p.quantity).toFixed(2)}`).join('\n') +
+                  `\nTotal: $${subtotal.toFixed(2)}`
                 );
                 window.open(`https://wa.me/${numeroWhatsapp}?text=${mensaje}`, '_blank');
               }}
