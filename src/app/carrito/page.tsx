@@ -34,10 +34,10 @@ export default function CarritoPage() {
             <table className="w-full text-left border-separate border-spacing-y-2 table-fixed">
               <thead>
                 <tr className="text-xs font-bold text-neutral-700 border-b">
-                  <th className="pb-2 px-2 w-2/5">PRODUCTO</th>
-                  <th className="pb-2 px-2 w-1/5">PRECIO</th>
-                  <th className="pb-2 px-2 w-1/5">CANTIDAD</th>
-                  <th className="pb-2 px-2 w-1/5">SUBTOTAL</th>
+                  <th className="pb-2 px-2 w-1/3">PRODUCTO</th>
+                  <th className="pb-2 px-2 w-1/6">PRECIO</th>
+                  <th className="pb-2 px-2 w-1/6">CANTIDAD</th>
+                  <th className="pb-2 px-2 w-1/3">SUBTOTAL</th>
                 </tr>
               </thead>
               <tbody>
@@ -49,7 +49,7 @@ export default function CarritoPage() {
                       <Image src={item.image} alt={item.name} width={60} height={60} className="rounded object-cover w-16 h-16" />
                       <span className="font-medium text-neutral-900 text-sm whitespace-pre-line">{item.name}</span>
                     </td>
-                    <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3 sm:ml-0 ml-6 pr-8 sm:pr-0">
+                    <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3 sm:ml-0 ml-2 pr-8 sm:pr-0">
                       <div className="block sm:inline mb-2 sm:mb-0">${item.price.toFixed(2)}</div>
                     </td>
                     <td className="sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3">
@@ -61,7 +61,7 @@ export default function CarritoPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3 sm:ml-0 ml-6 pr-8 sm:pr-0">
+                    <td className="font-semibold text-neutral-900 text-center sm:text-left sm:align-middle align-top sm:py-0 py-2 sm:mb-0 mb-3 sm:ml-0 ml-2 pr-8 sm:pr-0">
                       <div className="block sm:inline mb-2 sm:mb-0 mt-2 sm:mt-0">${(item.price * item.quantity).toFixed(2)}</div>
                     </td>
                   </tr>
