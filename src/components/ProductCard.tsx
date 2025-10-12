@@ -16,9 +16,14 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   const handleModalAdd = () => {
-  addToCart(product, modalQty);
-    setShowModal(false);
-    setModalQty(1);
+    addToCart(product, modalQty);
+    setAdded(true);
+    // keep modal open briefly so user sees confirmation, then close
+    setTimeout(() => {
+      setAdded(false);
+      setShowModal(false);
+      setModalQty(1);
+    }, 1200);
   };
 
   return (
@@ -67,9 +72,9 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
             <button
               onClick={handleModalAdd}
-              className="w-full py-3 rounded font-medium transition"
+              className={`w-full py-3 rounded font-medium transition ${added ? 'opacity-70' : ''}`}
               style={{ background: '#FEBA17', color: '#4E1F00' }}
-            >Agregar al carrito</button>
+            >{added ? 'Agregado' : 'Agregar al carrito'}</button>
           </div>
         </div>
       )}
