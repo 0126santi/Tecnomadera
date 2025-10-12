@@ -71,7 +71,7 @@ export default function ProductCard({ product }: { product: Product }) {
               </div>
             </div>
             <button
-              onClick={handleModalAdd}
+              onClick={e => { e.stopPropagation(); handleModalAdd(); }}
               className={`w-full py-3 rounded font-medium transition ${added ? 'opacity-70' : ''}`}
               style={{ background: '#FEBA17', color: '#4E1F00' }}
             >{added ? 'Agregado' : 'Agregar al carrito'}</button>
