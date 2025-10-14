@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 const CropImage = dynamic(() => import('@/components/CropImage'), { ssr: false });
 import { Product } from '@/data/products';
 import Image from 'next/image';
+import SearchBar from '@/components/SearchBar';
 import { fetchProducts, addProduct, deleteProduct } from '@/lib/productsApi';
 import { supabase } from '@/lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
@@ -31,12 +32,17 @@ export default function AdminPage() {
 				.then(setProducts)
 				.finally(() => setLoading(false));
 		}, [user]);
-			const [form, setForm] = useState<Partial<Product>>({});
+			// Tipo para el formulario del admin que incluye campos administrativos
+			type AdminProductForm = Partial<Product> & { codigo?: string; costo?: number };
+			const [form, setForm] = useState<AdminProductForm>({});
 			const [preview, setPreview] = useState<string | null>(null);
 			const [fileInputKey, setFileInputKey] = useState(0);
 			const [rawImage, setRawImage] = useState<string | null>(null);
 			const [showCrop, setShowCrop] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [search, setSearch] = useState('');
+	const [highlightedId, setHighlightedId] = useState<string | null>(null);
+	const listRef = React.useRef<HTMLUListElement | null>(null);
 
 	if (!user) {
 		return (
@@ -74,8 +80,41 @@ export default function AdminPage() {
 	}
 
 	const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-		const { name, value } = e.target;
-		setForm(f => ({ ...f, [name]: value }));
+			const { name, value } = e.target;
+			// For numeric fields, parse and clamp to >= 0
+			if (name === 'price' || name === 'costo') {
+				if (value === '') {
+					setForm(f => ({ ...f, [name]: undefined }));
+					return;
+				}
+				const parsed = Number(value);
+				const safe = Number.isNaN(parsed) ? undefined : Math.max(0, parsed);
+				setForm(f => ({ ...f, [name]: safe }));
+				return;
+			}
+
+			setForm(f => ({ ...f, [name]: value }));
+		};
+
+	// Prevent + and - characters on numeric fields (price specifically)
+	const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === '+' || e.key === '-') {
+			e.preventDefault();
+		}
+	};
+
+	const handleNumberPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+		const text = e.clipboardData.getData('text');
+		if (/[+\-]/.test(text)) {
+			e.preventDefault();
+			const clean = text.replace(/[+\-]/g, '');
+			const el = e.target as HTMLInputElement;
+			const start = el.selectionStart ?? 0;
+			const end = el.selectionEnd ?? 0;
+			const newVal = el.value.slice(0, start) + clean + el.value.slice(end);
+			// update form value (clamped in handleInput will normalize)
+			setForm(f => ({ ...f, [el.name]: newVal }));
+		}
 	};
 
 			const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,13 +144,20 @@ export default function AdminPage() {
 
 					const handleAdd = async () => {
 						setError(null);
-						if (!form.name || !form.price || !form.category || !preview) return;
+						// Validación: nombre, precio, categoría, imagen, código y costo son obligatorios
+						if (!form.name || !form.price || !form.category || !preview || !form.codigo || !form.costo) {
+							setError('Por favor completa todos los campos obligatorios: nombre, precio, categoría, código, costo e imagen.');
+							return;
+						}
 						setLoading(true);
 						try {
 							const newProduct = await addProduct({
 								name: form.name,
 								description: form.description || '',
 								price: Number(form.price),
+								codigo: form.codigo,
+								costo: Number(form.costo),
+							
 								image: preview,
 								category: form.category,
 								user_id: user.id,
@@ -151,6 +197,7 @@ const handleLogout = async () => {
 						<div className="mb-8 p-6 border rounded-2xl shadow bg-white dark:bg-neutral-800">
 							{error && <div className="text-red-500 mb-2">{error}</div>}
 					<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Agregar nuevo producto</h3>
+
 							<input
 								name="name"
 								placeholder="Nombre"
@@ -171,6 +218,30 @@ const handleLogout = async () => {
 								placeholder="Precio"
 								value={form.price || ''}
 								onChange={handleInput}
+								min={0}
+								step="0.01"
+								onKeyDown={handleNumberKeyDown}
+								onPaste={handleNumberPaste}
+								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+							/>
+							{/* Campo obligatorio: Código*/}
+							<input
+								name="codigo"
+								type="text"
+								placeholder="Código"
+								value={form.codigo || ''}
+								onChange={handleInput}
+								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+							/>
+							{/* Campo obligatorio: Costo interno */}
+							<input
+								name="costo"
+								type="number"
+								placeholder="Costo interno"
+								value={form.costo ?? ''}
+								onChange={handleInput}
+								min={0}
+								step="0.01"
 								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
 							/>
 							<select
@@ -219,11 +290,20 @@ const handleLogout = async () => {
 					</button>
 				</div>
 				<div>
+					{/* Search for existing products */}
+					<div className="mb-4 w-full">
+						<SearchBar value={search} onChange={setSearch} onSelect={(p) => {
+							setHighlightedId(p.id);
+							setTimeout(() => setHighlightedId(null), 3000);
+							const el = document.getElementById(`prod-${p.id}`);
+							if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+						}} />
+					</div>
 					<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Productos existentes</h3>
 					{loading && <div className="text-neutral-700 dark:text-neutral-300 mb-2">Cargando...</div>}
-					<ul className="divide-y divide-gray-100 dark:divide-neutral-800">
-						{products.map((prod) => (
-							<li key={prod.id} className="flex items-center gap-4 py-4">
+						<ul ref={listRef} className="divide-y divide-gray-100 dark:divide-neutral-800">
+							{products.map((prod) => (
+								<li id={`prod-${prod.id}`} key={prod.id} className={`flex items-center gap-4 py-4 ${highlightedId === prod.id ? 'bg-yellow-50' : ''}`}>
 								<Image
 									src={prod.image}
 									alt={prod.name}

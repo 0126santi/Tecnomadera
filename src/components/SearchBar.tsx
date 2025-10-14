@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { fetchProducts } from '../lib/productsApi';
 import { useRouter } from 'next/navigation';
 
-export default function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export default function SearchBar({ value, onChange, onSelect }: { value: string; onChange: (v: string) => void; onSelect?: (p: Product) => void }) {
   const [results, setResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -32,6 +32,10 @@ export default function SearchBar({ value, onChange }: { value: string; onChange
   const handleSelect = (product: Product) => {
     setShowResults(false);
     onChange('');
+    if (onSelect) {
+      onSelect(product);
+      return;
+    }
     // Redirige a la categoría y desplaza al producto
     router.push(`/categoria/${product.category}?producto=${product.id}`);
   };
@@ -47,11 +51,11 @@ export default function SearchBar({ value, onChange }: { value: string; onChange
         autoComplete="off"
       />
       {showResults && results.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-10 bg-white border border-gray-200 rounded shadow mt-1 max-h-60 overflow-y-auto">
+        <ul className="absolute left-0 right-0 top-full z-10 bg-white border border-gray-200 rounded shadow mt-1 max-h-60 overflow-y-auto dark:text-black">
           {results.map(prod => (
             <li
               key={prod.id}
-              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+              className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-700"
               onClick={() => handleSelect(prod)}
             >
               {prod.name}
