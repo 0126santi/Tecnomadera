@@ -4,6 +4,10 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  // Código interno del producto (ej.)
+  codigo?: string;
+  // Costo interno (para uso administrativo)
+  costo?: number;
   image: string;
   category: string;
   user_id?: string;
