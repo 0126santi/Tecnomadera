@@ -6,11 +6,13 @@ import { Product } from '@/data/products';
 import Image from 'next/image';
 import SearchBar from '@/components/SearchBar';
 import { fetchProducts, addProduct, deleteProduct } from '@/lib/productsApi';
+import { fetchSales, acceptSale, cancelSale, deleteSale, Sale, SaleItem } from '@/lib/salesApi';
 import { supabase } from '@/lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
 
 export default function AdminPage() {
 	const [user, setUser] = useState<User | null>(null);
+	const [activeSection, setActiveSection] = useState<'menu' | 'manage' | 'add-sale' | 'sales-log'>('menu');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [authError, setAuthError] = useState<string | null>(null);
@@ -21,6 +23,7 @@ export default function AdminPage() {
 			const getUser = async () => {
 				const { data } = await supabase.auth.getUser();
 				setUser(data.user);
+				setCurrentUid(data.user?.id ?? null);
 			};
 			getUser();
 		}, []);
@@ -43,6 +46,64 @@ export default function AdminPage() {
 	const [search, setSearch] = useState('');
 	const [highlightedId, setHighlightedId] = useState<string | null>(null);
 	const listRef = React.useRef<HTMLUListElement | null>(null);
+	const [sales, setSales] = useState<Sale[]>([]);
+	const [mainAdminUid] = useState('ca55854a-72eb-4144-81c7-6ce1eac75f5a');
+	const [currentUid, setCurrentUid] = useState<string | null>(null);
+
+	// Sales handlers (declared at top-level to respect hooks rules)
+	const loadSales = React.useCallback(async () => {
+	  setLoading(true);
+	  try {
+	    const s = await fetchSales();
+	    setSales(s);
+	  } catch (err) {
+	    console.error(err);
+	  } finally {
+	    setLoading(false);
+	  }
+	}, []);
+
+	useEffect(() => {
+	  if (!user) return;
+	  loadSales();
+	}, [user, loadSales]);
+
+	const handleAcceptSale = async (id: string) => {
+		setLoading(true);
+		try {
+			await acceptSale(id);
+			await loadSales();
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleCancelSale = async (id: string) => {
+		setLoading(true);
+		try {
+			await cancelSale(id);
+			await loadSales();
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleDeleteSale = async (id: string) => {
+		if (currentUid !== mainAdminUid) return;
+		setLoading(true);
+		try {
+			await deleteSale(id);
+			await loadSales();
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	if (!user) {
 		return (
@@ -78,6 +139,158 @@ export default function AdminPage() {
 			</section>
 		);
 	}
+
+	// Helper to render the existing "gestionar productos" panel. We keep the same markup
+	const renderManageProducts = () => (
+		<section className="max-w-2xl mx-auto mt-12 bg-white dark:bg-neutral-900 my-8 rounded-2xl p-8">
+			<div className="flex justify-end mb-4">
+				<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
+			</div>
+			<h2 className="text-3xl font-bold mb-8 text-center text-neutral-900 dark:text-neutral-100">Administrar productos</h2>
+			<div className="mb-8 p-6 border rounded-2xl shadow bg-white dark:bg-neutral-800">
+				{error && <div className="text-red-500 mb-2">{error}</div>}
+				<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Agregar nuevo producto</h3>
+
+				<input
+					name="name"
+					placeholder="Nombre"
+					value={form.name || ''}
+					onChange={handleInput}
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				/>
+				<textarea
+					name="description"
+					placeholder="Descripción"
+					value={form.description || ''}
+					onChange={handleInput}
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				/>
+				<input
+					name="price"
+					type="number"
+					placeholder="Precio"
+					value={form.price || ''}
+					onChange={handleInput}
+					min={0}
+					step="0.01"
+					onKeyDown={handleNumberKeyDown}
+					onPaste={handleNumberPaste}
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				/>
+				{/* Campo obligatorio: Código*/}
+				<input
+					name="codigo"
+					type="text"
+					placeholder="Código"
+					value={form.codigo || ''}
+					onChange={handleInput}
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				/>
+				{/* Campo obligatorio: Costo interno */}
+				<input
+					name="costo"
+					type="number"
+					placeholder="Costo interno"
+					value={form.costo ?? ''}
+					onChange={handleInput}
+					min={0}
+					step="0.01"
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				/>
+				<select
+					name="category"
+					value={form.category || ''}
+					onChange={handleInput}
+					className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+				>
+				<option value="">Selecciona categoría</option>
+				<option value="herraje">Herraje</option>
+				<option value="pega">Pega</option>
+				<option value="puerta">Puerta</option>
+				<option value="tablero">Tablero</option>
+			</select>
+							<input
+							key={fileInputKey}
+							type="file"
+							accept="image/*"
+							onChange={handleImage}
+							className="hidden"
+							id="file-upload"
+							disabled={showCrop}
+						/>
+							<label htmlFor="file-upload" className="inline-block mb-2 px-4 py-2 bg-neutral-100 text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 rounded cursor-pointer font-medium shadow hover:bg-neutral-200 dark:hover:bg-neutral-600 transition">
+								Elegir archivo
+							</label>
+						{showCrop && rawImage && (
+							<CropImage
+								image={rawImage}
+								aspect={5/3}
+								onCropComplete={handleCropComplete}
+								onCancel={handleCropCancel}
+							/>
+						)}
+						{preview && !showCrop && (
+							<Image
+								src={preview}
+								alt="Vista previa"
+								width={128}
+								height={96}
+								className="w-32 h-24 object-cover rounded mb-2"
+							/>
+						)}
+				<button onClick={handleAdd} className="w-full bg-black text-white py-2 rounded font-medium mt-2 hover:bg-neutral-800" disabled={loading}>
+					{loading ? 'Guardando...' : 'Agregar producto'}
+				</button>
+			</div>
+			<div>
+				{/* Search for existing products */}
+				<div className="mb-4 w-full">
+					<SearchBar value={search} onChange={setSearch} onSelect={(p) => {
+						setHighlightedId(p.id);
+						setTimeout(() => setHighlightedId(null), 3000);
+						const el = document.getElementById(`prod-${p.id}`);
+						if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}} />
+				</div>
+				<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Productos existentes</h3>
+				{loading && <div className="text-neutral-700 dark:text-neutral-300 mb-2">Cargando...</div>}
+					<ul ref={listRef} className="divide-y divide-gray-100 dark:divide-neutral-800">
+						{products.map((prod) => (
+							<li id={`prod-${prod.id}`} key={prod.id} className={`flex items-center gap-4 py-4 ${highlightedId === prod.id ? 'bg-yellow-50' : ''}`}>
+							<Image
+								src={prod.image}
+								alt={prod.name}
+								width={80}
+								height={64}
+								className="w-20 h-16 object-cover rounded"
+							/>
+									<div className="flex-1">
+									<div className="font-semibold text-neutral-900 dark:text-neutral-100">{prod.name}</div>
+									<div className="text-neutral-700 dark:text-neutral-300 text-sm">{prod.category}</div>
+								</div>
+							<button onClick={() => handleDelete(prod.id)} className="ml-2 text-red-500 hover:underline" disabled={loading}>Eliminar</button>
+						</li>
+					))}
+					</ul>
+			</div>
+		</section>
+	);
+
+	// Render the main menu with three big buttons
+	const renderMenu = () => (
+		<section className="max-w-md mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8 text-center">
+			<div className="flex justify-end mb-4">
+				<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
+			</div>
+			<h2 className="text-2xl font-bold mb-6 text-neutral-900 dark:text-neutral-100">Panel de administración</h2>
+			<p className="text-sm text-neutral-700 dark:text-neutral-300 mb-6">Selecciona una opción:</p>
+			<div className="space-y-4">
+			<button onClick={() => setActiveSection('manage')} className="w-full py-3 bg-black text-white rounded font-medium hover:bg-neutral-800">Gestionar productos</button>
+			<button onClick={() => setActiveSection('add-sale')} className="w-full py-3 bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium">Agregar venta (próximamente)</button>
+			<button onClick={() => setActiveSection('sales-log')} className="w-full py-3 bg-black text-white rounded font-medium hover:bg-neutral-800">Registro de ventas</button>
+			</div>
+		</section>
+	);
 
 	const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
 			const { name, value } = e.target;
@@ -188,138 +401,84 @@ const handleLogout = async () => {
 				}
 			};
 
-		return (
-						<section className="max-w-2xl mx-auto mt-12 bg-white dark:bg-neutral-900 my-8 rounded-2xl p-8">
+		// Show menu or the manage products panel depending on selection
+		if (activeSection === 'menu') return renderMenu();
+		if (activeSection === 'manage') return renderManageProducts();
+
+		// Placeholders for future sections
+		if (activeSection === 'add-sale') {
+			return (
+				<section className="max-w-md mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8 text-center">
 					<div className="flex justify-end mb-4">
 						<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
 					</div>
-				<h2 className="text-3xl font-bold mb-8 text-center text-neutral-900 dark:text-neutral-100">Administrar productos</h2>
-						<div className="mb-8 p-6 border rounded-2xl shadow bg-white dark:bg-neutral-800">
-							{error && <div className="text-red-500 mb-2">{error}</div>}
-					<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Agregar nuevo producto</h3>
-
-							<input
-								name="name"
-								placeholder="Nombre"
-								value={form.name || ''}
-								onChange={handleInput}
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							/>
-							<textarea
-								name="description"
-								placeholder="Descripción"
-								value={form.description || ''}
-								onChange={handleInput}
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							/>
-							<input
-								name="price"
-								type="number"
-								placeholder="Precio"
-								value={form.price || ''}
-								onChange={handleInput}
-								min={0}
-								step="0.01"
-								onKeyDown={handleNumberKeyDown}
-								onPaste={handleNumberPaste}
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							/>
-							{/* Campo obligatorio: Código*/}
-							<input
-								name="codigo"
-								type="text"
-								placeholder="Código"
-								value={form.codigo || ''}
-								onChange={handleInput}
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							/>
-							{/* Campo obligatorio: Costo interno */}
-							<input
-								name="costo"
-								type="number"
-								placeholder="Costo interno"
-								value={form.costo ?? ''}
-								onChange={handleInput}
-								min={0}
-								step="0.01"
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							/>
-							<select
-								name="category"
-								value={form.category || ''}
-								onChange={handleInput}
-								className="w-full border rounded px-3 py-2 mb-2 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-							>
-							<option value="">Selecciona categoría</option>
-							<option value="herraje">Herraje</option>
-							<option value="pega">Pega</option>
-							<option value="puerta">Puerta</option>
-							<option value="tablero">Tablero</option>
-						</select>
-											<input
-															key={fileInputKey}
-															type="file"
-															accept="image/*"
-															onChange={handleImage}
-															className="hidden"
-															id="file-upload"
-															disabled={showCrop}
-													/>
-													<label htmlFor="file-upload" className="inline-block mb-2 px-4 py-2 bg-neutral-100 text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 rounded cursor-pointer font-medium shadow hover:bg-neutral-200 dark:hover:bg-neutral-600 transition">
-														Elegir archivo
-													</label>
-											{showCrop && rawImage && (
-												<CropImage
-													image={rawImage}
-													aspect={5/3}
-													onCropComplete={handleCropComplete}
-													onCancel={handleCropCancel}
-												/>
-											)}
-											{preview && !showCrop && (
-												<Image
-													src={preview}
-													alt="Vista previa"
-													width={128}
-													height={96}
-													className="w-32 h-24 object-cover rounded mb-2"
-												/>
-											)}
-					<button onClick={handleAdd} className="w-full bg-black text-white py-2 rounded font-medium mt-2 hover:bg-neutral-800" disabled={loading}>
-							{loading ? 'Guardando...' : 'Agregar producto'}
-					</button>
-				</div>
-				<div>
-					{/* Search for existing products */}
-					<div className="mb-4 w-full">
-						<SearchBar value={search} onChange={setSearch} onSelect={(p) => {
-							setHighlightedId(p.id);
-							setTimeout(() => setHighlightedId(null), 3000);
-							const el = document.getElementById(`prod-${p.id}`);
-							if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-						}} />
+					<h2 className="text-2xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">Agregar venta</h2>
+					<p className="text-neutral-700 dark:text-neutral-300">Esta sección está en construcción. Pulsa &quot;Gestionar productos&quot; para volver o usa el menú.</p>
+					<div className="mt-6">
+						<button onClick={() => setActiveSection('menu')} className="px-4 py-2 bg-neutral-100 dark:bg-neutral-700 rounded">Volver al menú</button>
 					</div>
-					<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Productos existentes</h3>
-					{loading && <div className="text-neutral-700 dark:text-neutral-300 mb-2">Cargando...</div>}
-						<ul ref={listRef} className="divide-y divide-gray-100 dark:divide-neutral-800">
-							{products.map((prod) => (
-								<li id={`prod-${prod.id}`} key={prod.id} className={`flex items-center gap-4 py-4 ${highlightedId === prod.id ? 'bg-yellow-50' : ''}`}>
-								<Image
-									src={prod.image}
-									alt={prod.name}
-									width={80}
-									height={64}
-									className="w-20 h-16 object-cover rounded"
-								/>
-										<div className="flex-1">
-											<div className="font-semibold text-neutral-900 dark:text-neutral-100">{prod.name}</div>
-											<div className="text-neutral-700 dark:text-neutral-300 text-sm">{prod.category}</div>
+				</section>
+			);
+		}
+
+		if (activeSection === 'sales-log') {
+			return (
+				<section className="max-w-3xl mx-auto mt-12 p-6 bg-white dark:bg-neutral-900 rounded-2xl">
+					<div className="flex justify-between items-center mb-4">
+						<h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Registro de ventas</h2>
+						<button onClick={() => setActiveSection('menu')} className="text-sm text-secondary hover:underline">Volver al menú</button>
+					</div>
+					{loading && <div className="mb-4 text-neutral-700">Cargando...</div>}
+					{sales.length === 0 ? (
+						<div className="text-neutral-700">No hay ventas registradas.</div>
+					) : (
+						<ul className="space-y-4">
+							{sales.map((s) => (
+								<li key={s.id} className="border rounded p-4">
+									<div className="flex justify-between items-start">
+										<div>
+											{/* Eliminamos el código de supabase, solo mostramos estado y fecha */}
+											<div className="text-sm text-neutral-700">Estado: <span className="font-medium">{s.status}</span></div>
+											<div className="text-sm text-neutral-700">Creada: {new Date(s.created_at).toLocaleString()}</div>
 										</div>
-								<button onClick={() => handleDelete(prod.id)} className="ml-2 text-red-500 hover:underline" disabled={loading}>Eliminar</button>
-							</li>
-						))}
-					</ul>
-				</div>
-			</section>
-		);
+										<div className="space-x-2">
+											{s.status === 'pending' && (
+												<>
+													<button onClick={() => handleAcceptSale(s.id)} className="px-3 py-1 bg-green-600 text-white rounded">Aceptar</button>
+													<button onClick={() => handleCancelSale(s.id)} className="px-3 py-1 bg-yellow-400 text-black rounded">Cancelar</button>
+												</>
+											)}
+											{s.status === 'accepted' && currentUid === mainAdminUid && (
+												<button onClick={() => handleDeleteSale(s.id)} className="px-3 py-1 bg-red-500 text-white rounded">Eliminar</button>
+												)}
+										</div>
+									</div>
+									<div className="mt-3">
+														<ul className="text-sm">
+															{s.items.map((it: SaleItem, idx: number) => (
+																<li key={idx} className="grid grid-cols-5 gap-2 py-1 border-b last:border-b-0">
+																	<span className="col-span-2">{it.name} x{it.quantity}</span>
+																							<span>Precio: ${it.price.toFixed(2)}</span>
+																							<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>
+																								Código: {it.codigo ?? '-'}
+																							</span>
+																							<span>Costo: {typeof it.costo === 'number' ? `$${(it.costo * it.quantity).toFixed(2)}` : '-'}</span>
+																</li>
+															))}
+														</ul>
+														{/* Mostrar total y utilidad total */}
+														<div className="mt-2 text-right">
+															<div className="font-semibold">Total: ${s.total.toFixed(2)}</div>
+															<div className="font-semibold text-green-700">Utilidad total: ${
+																(s.total - s.items.reduce((sum, it) => sum + ((typeof it.costo === 'number' ? it.costo : 0) * it.quantity), 0)).toFixed(2)
+															}</div>
+														</div>
+									</div>
+								</li>
+							))}
+						</ul>
+					)}
+				</section>
+			);
+		}
 }
