@@ -481,8 +481,9 @@ const handleLogout = async () => {
 					}
 				} catch (err) {
 					const e = err as unknown;
-					const message = typeof e === 'object' && e !== null && 'message' in e ? (e as { message?: unknown }).message : String(e);
-					setErrorSale(message || 'Error al guardar la venta');
+					const raw = typeof e === 'object' && e !== null && 'message' in e ? (e as { message?: unknown }).message : e;
+					const messageStr = typeof raw === 'string' ? raw : String(raw ?? '');
+					setErrorSale(messageStr || 'Error al guardar la venta');
 				} finally {
 					setSaving(false);
 				}
