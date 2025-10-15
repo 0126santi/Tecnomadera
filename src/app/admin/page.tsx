@@ -16,8 +16,17 @@ export default function AdminPage() {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [authError, setAuthError] = useState<string | null>(null);
-			const [products, setProducts] = useState<Product[]>([]);
-			const [loading, setLoading] = useState(false);
+	const [products, setProducts] = useState<Product[]>([]);
+	const [loading, setLoading] = useState(false);
+	// Hooks para la sección 'Agregar venta' (deben estar al inicio)
+	// Usamos strings para los campos del formulario para dejar los inputs vacíos por defecto
+	const [saleProduct, setSaleProduct] = useState<{ name: string; cantidad: string; precio: string; codigo: string; costo: string }>({ name: '', cantidad: '', precio: '', codigo: '', costo: '' });
+	const [saleItems, setSaleItems] = useState<Array<{ name: string; cantidad: number; precio: number; codigo: string; costo: number }>>([]);
+	const [errorSale, setErrorSale] = useState<string | null>(null);
+	const [saving, setSaving] = useState(false);
+	// ...existing code...
+	// ...existing code...
+	// ...existing code...
 		// Cargar usuario y productos
 		useEffect(() => {
 			const getUser = async () => {
@@ -286,7 +295,7 @@ export default function AdminPage() {
 			<p className="text-sm text-neutral-700 dark:text-neutral-300 mb-6">Selecciona una opción:</p>
 			<div className="space-y-4">
 			<button onClick={() => setActiveSection('manage')} className="w-full py-3 bg-black text-white rounded font-medium hover:bg-neutral-800">Gestionar productos</button>
-			<button onClick={() => setActiveSection('add-sale')} className="w-full py-3 bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium">Agregar venta (próximamente)</button>
+			<button onClick={() => setActiveSection('add-sale')} className="w-full py-3 bg-black text-white rounded font-medium hover:bg-neutral-800">Agregar venta</button>
 			<button onClick={() => setActiveSection('sales-log')} className="w-full py-3 bg-black text-white rounded font-medium hover:bg-neutral-800">Registro de ventas</button>
 			</div>
 		</section>
@@ -401,21 +410,139 @@ const handleLogout = async () => {
 				}
 			};
 
+		// ...existing code...
+
 		// Show menu or the manage products panel depending on selection
 		if (activeSection === 'menu') return renderMenu();
 		if (activeSection === 'manage') return renderManageProducts();
 
-		// Placeholders for future sections
 		if (activeSection === 'add-sale') {
+
+			const handleSaleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+				const { name, value } = e.target;
+				// Guardamos como string para que el input pueda estar vacío y el usuario borre sin que aparezca 0
+				setSaleProduct(p => ({ ...p, [name]: value }));
+			};
+
+			const handleAddSaleItem = () => {
+				if (!saleProduct.name || !saleProduct.cantidad || !saleProduct.precio || !saleProduct.codigo || !saleProduct.costo) {
+					setErrorSale('Completa todos los campos para agregar el producto.');
+					return;
+				}
+				// Convertir a números y validar
+				const cantidad = parseInt(saleProduct.cantidad, 10);
+				const precio = parseFloat(saleProduct.precio);
+				const costo = parseFloat(saleProduct.costo);
+				if (Number.isNaN(cantidad) || Number.isNaN(precio) || Number.isNaN(costo)) {
+					setErrorSale('Cantidad, precio y costo deben ser números válidos.');
+					return;
+				}
+				setSaleItems(items => [...items, { name: saleProduct.name, cantidad, precio, codigo: saleProduct.codigo, costo }]);
+				setSaleProduct({ name: '', cantidad: '', precio: '', codigo: '', costo: '' });
+				setErrorSale(null);
+			};
+
+			const handleRemoveSaleItem = (idx: number) => {
+				setSaleItems(items => items.filter((_, i) => i !== idx));
+			};
+
+			const handleSaveSale = async () => {
+				if (saleItems.length === 0) {
+					setErrorSale('Agrega al menos un producto.');
+					return;
+				}
+				setSaving(true);
+				try {
+					// Calcula subtotal y total
+					const subtotal = saleItems.reduce((sum, it) => sum + it.precio * it.cantidad, 0);
+					const total = subtotal;
+					// Prepara items para la venta
+					const items = saleItems.map(it => ({
+						id: Math.random().toString(36).slice(2),
+						name: it.name,
+						price: it.precio,
+						codigo: it.codigo,
+						costo: it.costo,
+						quantity: it.cantidad
+					}));
+					// Llama a la API para guardar la venta
+					const res = await fetch('/api/sales', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ items, subtotal, total })
+					});
+					if (!res.ok) {
+						const body = await res.json().catch(() => ({}));
+						setErrorSale(body.error || 'Error al guardar la venta');
+					} else {
+						setSaleItems([]);
+						setErrorSale(null);
+						alert('Venta guardada correctamente');
+					}
+				} catch (err) {
+					const e = err as unknown;
+					const message = typeof e === 'object' && e !== null && 'message' in e ? (e as { message?: unknown }).message : String(e);
+					setErrorSale(message || 'Error al guardar la venta');
+				} finally {
+					setSaving(false);
+				}
+			};
+
 			return (
-				<section className="max-w-md mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8 text-center">
+				<section className="max-w-xl mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8">
 					<div className="flex justify-end mb-4">
 						<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
 					</div>
 					<h2 className="text-2xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">Agregar venta</h2>
-					<p className="text-neutral-700 dark:text-neutral-300">Esta sección está en construcción. Pulsa &quot;Gestionar productos&quot; para volver o usa el menú.</p>
-					<div className="mt-6">
-						<button onClick={() => setActiveSection('menu')} className="px-4 py-2 bg-neutral-100 dark:bg-neutral-700 rounded">Volver al menú</button>
+					<div className="mb-6">
+						<h3 className="font-semibold mb-2">Agregar producto</h3>
+						<div className="grid grid-cols-2 gap-4 mb-2">
+							<div>
+								<label className="block text-xs text-neutral-600 mb-1">Nombre del producto</label>
+								<input name="name" aria-label="Nombre del producto" value={saleProduct.name} onChange={handleSaleInput} placeholder="" className="w-full border rounded px-3 py-2" />
+							</div>
+							<div>
+								<label className="block text-xs text-neutral-600 mb-1">Cantidad</label>
+								<input name="cantidad" type="number" min={1} aria-label="Cantidad" value={saleProduct.cantidad} onChange={handleSaleInput} placeholder="" className="w-full border rounded px-3 py-2" />
+							</div>
+							<div>
+								<label className="block text-xs text-neutral-600 mb-1">Precio unitario</label>
+								<input name="precio" type="number" min={0} step="0.01" aria-label="Precio unitario" value={saleProduct.precio} onChange={handleSaleInput} placeholder="" className="w-full border rounded px-3 py-2" />
+							</div>
+							<div>
+								<label className="block text-xs text-neutral-600 mb-1">Código</label>
+								<input name="codigo" aria-label="Código del producto" value={saleProduct.codigo} onChange={handleSaleInput} placeholder="" className="w-full border rounded px-3 py-2" />
+							</div>
+							<div>
+								<label className="block text-xs text-neutral-600 mb-1">Costo interno</label>
+								<input name="costo" type="number" min={0} step="0.01" aria-label="Costo interno" value={saleProduct.costo} onChange={handleSaleInput} placeholder="" className="w-full border rounded px-3 py-2" />
+							</div>
+						</div>
+						<button onClick={handleAddSaleItem} className="px-4 py-2 bg-black text-white rounded font-medium hover:bg-neutral-800">Agregar</button>
+						{errorSale && <div className="text-red-500 mt-2">{errorSale}</div>}
+					</div>
+					<div className="mb-6">
+						<h3 className="font-semibold mb-2">Productos agregados</h3>
+						{saleItems.length === 0 ? (
+							<div className="text-neutral-700">No hay productos agregados.</div>
+						) : (
+							<ul className="divide-y divide-gray-100">
+								{saleItems.map((it, idx) => (
+									<li key={idx} className="flex items-center gap-4 py-2">
+										<span className="font-medium">{it.name}</span>
+										<span>Cantidad: {it.cantidad}</span>
+										<span>Precio unitario: ${it.precio.toFixed(2)}</span>
+										<span>Código: {it.codigo}</span>
+										<span>Costo: ${it.costo.toFixed(2)}</span>
+										<button onClick={() => handleRemoveSaleItem(idx)} className="text-red-500 hover:underline">Eliminar</button>
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
+					<div className="flex justify-between items-center">
+						<button onClick={() => setActiveSection('menu')} className="px-4 py-2 bg-neutral-100 rounded dark:text-black">Volver al menú</button>
+						<button onClick={handleSaveSale} className="px-6 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700" disabled={saving}>Finalizar venta</button>
 					</div>
 				</section>
 			);
@@ -458,11 +585,11 @@ const handleLogout = async () => {
 															{s.items.map((it: SaleItem, idx: number) => (
 																<li key={idx} className="grid grid-cols-5 gap-2 py-1 border-b last:border-b-0">
 																	<span className="col-span-2">{it.name} x{it.quantity}</span>
-																							<span>Precio: ${it.price.toFixed(2)}</span>
+																							<span>Precio unitario: ${it.price.toFixed(2)}</span>
 																							<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>
 																								Código: {it.codigo ?? '-'}
 																							</span>
-																							<span>Costo: {typeof it.costo === 'number' ? `$${(it.costo * it.quantity).toFixed(2)}` : '-'}</span>
+																							<span>Costo unitario: {typeof it.costo === 'number' ? `$${it.costo.toFixed(2)}` : '-'}</span>
 																</li>
 															))}
 														</ul>
