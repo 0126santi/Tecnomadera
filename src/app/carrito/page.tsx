@@ -113,7 +113,7 @@ export default function CarritoPage() {
               style={{ background: '#FEBA17', color: '#4E1F00' }}
               onClick={() => {
                 if (!cart || cart.length === 0) return;
-                const numeroWhatsapp = '584244446227';
+                const numeroWhatsapp = '58424446206';
                 // Prepare sale payload (B: create pending sale in DB before opening WhatsApp)
                 const items: SaleItem[] = cart.map(p => ({
                   id: p.id,
