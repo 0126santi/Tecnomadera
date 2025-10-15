@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { getCart, removeFromCart, updateCartQuantity, clearCart, CartItem } from '../../lib/cart';
+import { SaleItem } from '@/lib/salesApi';
 import Image from 'next/image';
 
 export default function CarritoPage() {
@@ -113,6 +114,29 @@ export default function CarritoPage() {
               onClick={() => {
                 if (!cart || cart.length === 0) return;
                 const numeroWhatsapp = '584244446227';
+                // Prepare sale payload (B: create pending sale in DB before opening WhatsApp)
+                const items: SaleItem[] = cart.map(p => ({
+                  id: p.id,
+                  name: p.name,
+                  price: p.price,
+                  codigo: p.codigo ?? '',
+                  costo: p.costo ?? null,
+                  quantity: p.quantity
+                }));
+                const payload = { items, subtotal, total: subtotal, buyer_phone: null, buyer_user_id: null };
+
+                // Fire-and-forget: post to server-side API that uses the service role key to insert safely
+                fetch('/api/sales', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                }).then(async (res) => {
+                  if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    console.error('Create sale failed', body.error || res.statusText);
+                  }
+                }).catch(err => console.error('Network error creating sale', err));
+
                 const mensaje = encodeURIComponent(
                   "Hola, quiero comprar:\n" +
                   cart.map(p => `- ${p.name} (${p.quantity} unidades) - $${(p.price * p.quantity).toFixed(2)}`).join('\n') +
