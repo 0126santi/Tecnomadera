@@ -524,16 +524,16 @@ const handleLogout = async () => {
 					</div>
 					<div className="mb-6">
 						<h3 className="font-semibold mb-2">Productos agregados</h3>
-						{saleItems.length === 0 ? (
+								{saleItems.length === 0 ? (
 							<div className="text-neutral-700">No hay productos agregados.</div>
 						) : (
 							<ul className="divide-y divide-gray-100">
-								{saleItems.map((it, idx) => (
+										{saleItems.map((it, idx) => (
 									<li key={idx} className="flex items-center gap-4 py-2">
-										<span className="font-medium">{it.name}</span>
-										<span>Cantidad: {it.cantidad}</span>
+										<span className="font-medium" title={it.name} style={{maxWidth: '220px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>{it.name}</span>
+										<span style={{minWidth: '80px'}}>Cantidad: {it.cantidad}</span>
 										<span>Precio unitario: ${it.precio.toFixed(2)}</span>
-										<span>Código: {it.codigo}</span>
+										<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>Código: {it.codigo}</span>
 										<span>Costo: ${it.costo.toFixed(2)}</span>
 										<button onClick={() => handleRemoveSaleItem(idx)} className="text-red-500 hover:underline">Eliminar</button>
 									</li>
@@ -584,15 +584,17 @@ const handleLogout = async () => {
 									<div className="mt-3">
 														<ul className="text-sm">
 															{s.items.map((it: SaleItem, idx: number) => (
-																<li key={idx} className="grid grid-cols-5 gap-2 py-1 border-b last:border-b-0">
-																	<span className="col-span-2">{it.name} x{it.quantity}</span>
-																							<span>Precio unitario: ${it.price.toFixed(2)}</span>
-																							<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>
-																								Código: {it.codigo ?? '-'}
-																							</span>
-																							<span>Costo unitario: {typeof it.costo === 'number' ? `$${it.costo.toFixed(2)}` : '-'}</span>
-																</li>
-															))}
+																	<li key={idx} className="grid grid-cols-6 gap-2 py-1 border-b last:border-b-0">
+																		<span className="font-medium" title={it.name} style={{maxWidth: '220px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>Nombre: {it.name}</span>
+																		<span style={{minWidth: '80px'}}>Cantidad: {it.quantity}</span>
+																		<span>Precio unitario: ${it.price.toFixed(2)}</span>
+																		<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>
+																			Código: {it.codigo ?? '-'}
+																		</span>
+																		<span>Costo unitario: {typeof it.costo === 'number' ? `$${it.costo.toFixed(2)}` : '-'}</span>
+																		<button onClick={() => handleDeleteSale(s.id)} className="text-red-500 hover:underline">Eliminar</button>
+																	</li>
+																))}
 														</ul>
 														{/* Mostrar total y utilidad total */}
 														<div className="mt-2 text-right">
