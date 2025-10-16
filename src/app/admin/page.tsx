@@ -151,7 +151,7 @@ export default function AdminPage() {
 
 	// Helper to render the existing "gestionar productos" panel. We keep the same markup
 	const renderManageProducts = () => (
-		<section className="max-w-2xl mx-auto mt-12 bg-white dark:bg-neutral-900 my-8 rounded-2xl p-8">
+	<section className="max-w-2xl mx-auto mt-12 bg-white dark:bg-neutral-900 my-8 rounded-2xl p-8">
 			<div className="flex justify-end mb-4">
 				<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
 			</div>
@@ -287,7 +287,7 @@ export default function AdminPage() {
 
 	// Render the main menu with three big buttons
 	const renderMenu = () => (
-		<section className="max-w-md mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8 text-center">
+	<section className="max-w-md mx-auto mt-16 p-8 border rounded-2xl shadow bg-white dark:bg-neutral-900 my-8 text-center">
 			<div className="flex justify-end mb-4">
 				<button onClick={handleLogout} className="text-sm text-secondary hover:underline">Cerrar sesión</button>
 			</div>

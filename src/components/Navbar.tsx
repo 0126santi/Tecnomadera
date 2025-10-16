@@ -18,16 +18,16 @@ export default function Navbar() {
   }, [mobileSearchOpen]);
 
   return (
-  <nav className="relative flex items-center justify-between py-4 px-4 sm:px-8 border-b border-gray-100 w-full" style={{ background: '#FEBA17' }}>
+  <nav className="relative flex items-center justify-between py-4 px-4 sm:px-8 border-b border-gray-100 w-full" style={{ background: '#0A1931' }}>
       <div className="flex items-center gap-2">
         <button
-          className="p-2 rounded-full bg-transparent hover:bg-[#FEBA17] focus:bg-[#FEBA17] transition-shadow duration-150 shadow-none hover:shadow-lg"
+          className="p-2 rounded-full bg-transparent hover:bg-[#0A1931] focus:bg-[#0A1931] transition-shadow duration-150 shadow-none hover:shadow-lg"
           onClick={() => setSidebarOpen(true)}
           aria-label="Abrir menú"
         >
           <MdMenu size={28} className="text-white" />
         </button>
-        <Link href="/" className="text-2xl font-bold tracking-tight ml-2" style={{ color: '#111' }}>Tecnomadera</Link>
+        <Link href="/" className="text-2xl font-bold tracking-tight ml-2" style={{ color: '#fff' }}>Tecnomadera</Link>
       </div>
       <div className="flex-1 flex justify-center">
         <div className="hidden sm:flex w-full justify-center items-center">
@@ -51,11 +51,11 @@ export default function Navbar() {
       </div>
       <div className="flex items-center gap-2">
   {/* Mobile search icon */}
-  <button onClick={() => setMobileSearchOpen(true)} className="p-2 rounded-full bg-transparent hover:bg-[#FEBA17] focus:bg-[#FEBA17] transition-shadow duration-150 shadow-none hover:shadow-lg sm:hidden" aria-label="Buscar">
-          <MdSearch size={22} className="text-white" />
+  <button onClick={() => setMobileSearchOpen(true)} className="p-2 rounded-full bg-transparent hover:bg-[#0A1931] focus:bg-[#0A1931] transition-shadow duration-150 shadow-none hover:shadow-lg sm:hidden" aria-label="Buscar">
+    <MdSearch size={22} className="text-white" />
         </button>
-  <Link href="/carrito" className="p-2 rounded-full bg-transparent hover:bg-[#FEBA17] focus:bg-[#FEBA17] transition-shadow duration-150 shadow-none hover:shadow-lg" aria-label="Carrito">
-          <MdShoppingCart size={26} className="text-white" />
+  <Link href="/carrito" className="p-2 rounded-full bg-transparent hover:bg-[#0A1931] focus:bg-[#0A1931] transition-shadow duration-150 shadow-none hover:shadow-lg" aria-label="Carrito">
+    <MdShoppingCart size={26} className="text-[#E96400]" />
         </Link>
       </div>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

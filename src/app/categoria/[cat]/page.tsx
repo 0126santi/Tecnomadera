@@ -11,7 +11,7 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cat:
 
   return (
     <section>
-  <h2 className="text-3xl font-bold mb-8 text-center text-neutral-900">{categoria.name}</h2>
+  <h2 className="text-2xl font-extrabold uppercase tracking-wide text-black mb-8 text-center" style={{ letterSpacing: '1px' }}>{categoria.name}</h2>
       {productos.length === 0 ? (
   <p className="text-neutral-700 text-center">No hay productos en esta categoría.</p>
       ) : (
