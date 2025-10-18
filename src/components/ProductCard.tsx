@@ -29,7 +29,7 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <>
   <div
-    className="bg-card rounded-lg fancy-shadow p-2 sm:p-3 flex flex-col gap-1 sm:gap-2 border card-hover transition-all duration-200 w-56 max-h-[320px] h-[320px] cursor-pointer"
+    className="bg-card rounded-lg fancy-shadow p-2 sm:p-3 flex flex-col gap-1 sm:gap-2 border card-hover transition-all duration-200 w-56 max-h-[300px] h-[300px] cursor-pointer"
   style={{ borderColor: '#294A2D' }}
         onClick={() => setShowModal(true)}
       >
@@ -42,7 +42,7 @@ export default function ProductCard({ product }: { product: Product }) {
         />
   <h3 className="font-semibold text-base text-neutral-900 line-clamp-3 h-12">{product.name}</h3>
         <div className="flex-1 overflow-y-auto">
-          <p className="text-neutral-700 text-xs break-words" style={{ whiteSpace: 'pre-line', maxHeight: '48px' }}>{product.description}</p>
+          <p className="text-neutral-700 text-xs break-words" style={{ whiteSpace: 'pre-line', maxHeight: '36px' }}>{product.description}</p>
         </div>
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold text-lg text-neutral-900">{product.price}</span>
