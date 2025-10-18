@@ -38,11 +38,11 @@ export default function ProductCard({ product }: { product: Product }) {
           alt={product.name}
           width={180}
           height={120}
-          className="rounded-md object-cover w-full h-20 sm:h-28 mb-1"
+          className="rounded-md w-full h-20 sm:h-28 mb-1 flex-none object-contain sm:object-cover"
         />
   <h3 className="font-semibold text-base text-neutral-900 line-clamp-3 h-12">{product.name}</h3>
         <div className="flex-1 overflow-y-auto">
-          <p className="text-neutral-700 text-xs break-words" style={{ whiteSpace: 'pre-line', maxHeight: '36px' }}>{product.description}</p>
+          <p className="text-neutral-700 text-xs break-words max-h-[28px] sm:max-h-[36px]" style={{ whiteSpace: 'pre-line' }}>{product.description}</p>
         </div>
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold text-lg text-neutral-900">{product.price}</span>
