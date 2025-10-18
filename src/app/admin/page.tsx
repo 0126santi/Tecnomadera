@@ -534,9 +534,9 @@ const handleLogout = async () => {
 									<li key={idx} className="flex items-center gap-4 py-2">
 										<span className="font-medium" title={it.name} style={{maxWidth: '220px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>{it.name}</span>
 										<span style={{minWidth: '80px'}}>Cantidad: {it.cantidad}</span>
-										<span>Precio unitario: ${it.precio.toFixed(2)}</span>
+										<span>Precio unitario: {it.precio.toFixed(2)}</span>
 										<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>Código: {it.codigo}</span>
-										<span>Costo: ${it.costo.toFixed(2)}</span>
+										<span>Costo: {it.costo.toFixed(2)}</span>
 										<button onClick={() => handleRemoveSaleItem(idx)} className="text-red-500 hover:underline">Eliminar</button>
 									</li>
 								))}
@@ -589,19 +589,19 @@ const handleLogout = async () => {
 																	<li key={idx} className="grid grid-cols-6 gap-2 py-1 border-b last:border-b-0">
 																		<span className="font-medium" title={it.name} style={{maxWidth: '220px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>Nombre: {it.name}</span>
 																		<span style={{minWidth: '80px'}}>Cantidad: {it.quantity}</span>
-																		<span>Precio unitario: ${it.price.toFixed(2)}</span>
+																		<span>Precio unitario: {it.price.toFixed(2)}</span>
 																		<span style={{maxWidth: '120px', overflowX: 'auto', display: 'inline-block', whiteSpace: 'nowrap'}}>
 																			Código: {it.codigo ?? '-'}
 																		</span>
-																		<span>Costo unitario: {typeof it.costo === 'number' ? `$${it.costo.toFixed(2)}` : '-'}</span>
+																		<span>Costo unitario: {typeof it.costo === 'number' ? it.costo.toFixed(2) : '-'}</span>
 																		<button onClick={() => handleDeleteSale(s.id)} className="text-red-500 hover:underline">Eliminar</button>
 																	</li>
 																))}
 														</ul>
 														{/* Mostrar total y utilidad total */}
 														<div className="mt-2 text-right">
-															<div className="font-semibold">Total: ${s.total.toFixed(2)}</div>
-															<div className="font-semibold text-green-700">Utilidad total: ${
+															<div className="font-semibold">Total: {s.total.toFixed(2)}</div>
+															<div className="font-semibold text-green-700">Utilidad total: {
 																(s.total - s.items.reduce((sum, it) => sum + ((typeof it.costo === 'number' ? it.costo : 0) * it.quantity), 0)).toFixed(2)
 															}</div>
 														</div>
