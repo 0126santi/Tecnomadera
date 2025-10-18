@@ -217,6 +217,8 @@ export default function AdminPage() {
 				<option value="pega">Pega</option>
 				<option value="puerta">Puerta</option>
 				<option value="tablero">Tablero</option>
+				<option value="formica">Formica</option>
+				<option value="otros">Otros</option>
 			</select>
 							<input
 							key={fileInputKey}
