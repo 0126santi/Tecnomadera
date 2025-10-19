@@ -29,22 +29,25 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <>
   <div
-    className="bg-card rounded-lg fancy-shadow p-2 sm:p-3 flex flex-col gap-1 sm:gap-2 border card-hover transition-all duration-200 w-56 max-h-[300px] h-[300px] cursor-pointer"
+    className="bg-card rounded-lg overflow-hidden fancy-shadow p-2 sm:p-3 flex flex-col gap-1 sm:gap-2 border card-hover transition-all duration-200 w-56 max-h-[300px] h-[300px] cursor-pointer"
   style={{ borderColor: '#294A2D' }}
         onClick={() => setShowModal(true)}
       >
-        <Image
-          src={product.image}
-          alt={product.name}
-          width={180}
-          height={120}
-          className="rounded-md w-full h-20 sm:h-28 mb-1 flex-none object-contain sm:object-cover"
-        />
+        <div className="w-full h-28 sm:h-28 mb-1 overflow-hidden rounded-lg bg-transparent">
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={180}
+            height={120}
+            className="w-full h-full block object-cover object-center"
+            style={{ borderRadius: '0.5rem', background: 'transparent' }}
+          />
+        </div>
   <h3 className="font-semibold text-base text-neutral-900 line-clamp-3 h-12">{product.name}</h3>
         <div className="flex-1 overflow-y-auto">
-          <p className="text-neutral-700 text-xs break-words max-h-[28px] sm:max-h-[36px]" style={{ whiteSpace: 'pre-line' }}>{product.description}</p>
+          <p className="text-neutral-700 text-xs break-words max-h-[20px] sm:max-h-[36px]" style={{ whiteSpace: 'pre-line' }}>{product.description}</p>
         </div>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-0.5">
           <span className="font-bold text-lg text-neutral-900">{product.price}</span>
           <button
             onClick={e => { e.stopPropagation(); handleAdd(); }}
