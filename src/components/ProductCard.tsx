@@ -2,7 +2,8 @@
 import { Product } from '../data/products';
 import { addToCart } from '../lib/cart';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Portal from './Portal';
 
 export default function ProductCard({ product }: { product: Product }) {
   const [added, setAdded] = useState(false);
@@ -25,6 +26,15 @@ export default function ProductCard({ product }: { product: Product }) {
       setModalQty(1);
     }, 1200);
   };
+
+  useEffect(() => {
+    if (showModal) {
+      try { document.body.style.overflow = 'hidden'; } catch {}
+    } else {
+      try { document.body.style.overflow = ''; } catch {}
+    }
+    return () => { try { document.body.style.overflow = ''; } catch {} };
+  }, [showModal]);
 
   return (
     <>
@@ -59,28 +69,30 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
   {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-100 bg-opacity-90" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl" onClick={() => setShowModal(false)}>&times;</button>
-            <Image src={product.image} alt={product.name} width={400} height={300} className="rounded object-cover w-full h-64 mb-4" />
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">{product.name}</h2>
-            <p className="text-neutral-700 mb-2" style={{ whiteSpace: 'pre-line' }}>{product.description}</p>
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-bold text-xl text-neutral-900">{product.price}</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setModalQty(q => Math.max(1, q - 1))} className="px-2 py-1 rounded bg-neutral-200 text-lg dark:text-black">-</button>
-                <span className="px-3 py-1 text-base font-medium text-neutral-900 border rounded" style={{ borderColor: '#294A2D' }}>{modalQty}</span>
-                <button onClick={() => setModalQty(q => q + 1)} className="px-2 py-1 rounded bg-neutral-200 text-lg dark:text-black">+</button>
-              </div>
+    <Portal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-100 bg-opacity-90" onClick={() => setShowModal(false)}>
+        <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative" onClick={e => e.stopPropagation()}>
+          <button className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl" onClick={() => setShowModal(false)}>&times;</button>
+          <Image src={product.image} alt={product.name} width={400} height={300} className="rounded object-cover w-full h-64 mb-4" />
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">{product.name}</h2>
+          <p className="text-neutral-700 mb-2" style={{ whiteSpace: 'pre-line' }}>{product.description}</p>
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-bold text-xl text-neutral-900">{product.price}</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setModalQty(q => Math.max(1, q - 1))} className="px-2 py-1 rounded bg-neutral-200 text-lg dark:text-black">-</button>
+              <span className="px-3 py-1 text-base font-medium text-neutral-900 border rounded" style={{ borderColor: '#294A2D' }}>{modalQty}</span>
+              <button onClick={() => setModalQty(q => q + 1)} className="px-2 py-1 rounded bg-neutral-200 text-lg dark:text-black">+</button>
             </div>
-            <button
-              onClick={e => { e.stopPropagation(); handleModalAdd(); }}
-              className={`w-full py-3 rounded font-medium transition ${added ? 'opacity-70' : ''}`}
-              style={{ background: '#E96400', color: '#ffffff' }}
-            >{added ? 'Agregado' : 'Agregar al carrito'}</button>
           </div>
+          <button
+            onClick={e => { e.stopPropagation(); handleModalAdd(); }}
+            className={`w-full py-3 rounded font-medium transition ${added ? 'opacity-70' : ''}`}
+            style={{ background: '#E96400', color: '#ffffff' }}
+          >{added ? 'Agregado' : 'Agregar al carrito'}</button>
         </div>
-      )}
+      </div>
+    </Portal>
+  )}
     </>
   );
 }
