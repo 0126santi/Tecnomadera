@@ -2,25 +2,31 @@ import { supabase } from './supabaseClient';
 import { Product } from '@/data/products';
 
 export async function fetchProducts(category?: string): Promise<Product[]> {
-  // Try ordering by created_at (newest first). If the column doesn't exist
-  // fallback to ordering by name to avoid throwing an unhandled error at runtime.
+  // Try ordering by 'position' (manual order). If the column doesn't exist,
+  // fallback to created_at or name ordering to avoid runtime errors.
   try {
-    let query = supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (category) {
-      query = query.eq('category', category);
-    }
-    const { data, error } = await query;
+    let query = supabase.from('products').select('*').order('position', { ascending: true });
+    if (category) query = query.eq('category', category);
+  const { data, error } = await query;
     if (error) {
-      // If created_at doesn't exist, fallback to name ordering
       const msg = (error.message || '').toLowerCase();
-      if (msg.includes('created_at') || msg.includes('column') || msg.includes('does not exist')) {
-        console.warn('fetchProducts: created_at column missing, falling back to name ordering');
-        let fallback = supabase.from('products').select('*').order('name');
-        if (category) fallback = fallback.eq('category', category);
-        const { data: d2, error: e2 } = await fallback;
+      // If position doesn't exist, fallback to created_at
+      if (msg.includes('position') || msg.includes('column') || msg.includes('does not exist')) {
+        console.warn('fetchProducts: position column missing, falling back to created_at ordering');
+        let q2 = supabase.from('products').select('*').order('created_at', { ascending: false });
+        if (category) q2 = q2.eq('category', category);
+        const { data: d2, error: e2 } = await q2;
         if (e2) {
           console.error('fetchProducts fallback error', e2);
-          return [] as Product[];
+          // final fallback: order by name
+          let q3 = supabase.from('products').select('*').order('name');
+          if (category) q3 = q3.eq('category', category);
+          const { data: d3, error: e3 } = await q3;
+          if (e3) {
+            console.error('fetchProducts final fallback error', e3);
+            return [] as Product[];
+          }
+          return d3 as Product[];
         }
         return d2 as Product[];
       }
@@ -30,9 +36,19 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
     return data as Product[];
   } catch (err) {
     console.error('fetchProducts unexpected error', err);
-    // As a last resort, return empty list to keep the UI alive
     return [] as Product[];
   }
+}
+
+type UpdateFields = Record<string, unknown>;
+
+export async function updateProduct(id: string, updates: Partial<Product> & UpdateFields): Promise<Product | null> {
+  const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
+  if (error) {
+    console.error('updateProduct error', error);
+    return null;
+  }
+  return data as Product;
 }
 
 export async function addProduct(product: Omit<Product, 'id'>): Promise<Product> {

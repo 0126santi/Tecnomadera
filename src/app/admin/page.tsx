@@ -5,7 +5,7 @@ const CropImage = dynamic(() => import('@/components/CropImage'), { ssr: false }
 import { Product } from '@/data/products';
 import Image from 'next/image';
 import SearchBar from '@/components/SearchBar';
-import { fetchProducts, addProduct, deleteProduct } from '@/lib/productsApi';
+import { fetchProducts, addProduct, deleteProduct, updateProduct } from '@/lib/productsApi';
 import { fetchSales, acceptSale, cancelSale, deleteSale, Sale, SaleItem } from '@/lib/salesApi';
 import { supabase } from '@/lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
@@ -17,6 +17,11 @@ export default function AdminPage() {
 	const [password, setPassword] = useState('');
 	const [authError, setAuthError] = useState<string | null>(null);
 	const [products, setProducts] = useState<Product[]>([]);
+
+	// Type used for UI reordering (may include position)
+	type ProductWithPos = Product & { position?: number };
+
+	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	// Hooks para la sección 'Agregar venta' (deben estar al inicio)
 	// Usamos strings para los campos del formulario para dejar los inputs vacíos por defecto
@@ -44,6 +49,50 @@ export default function AdminPage() {
 				.then(setProducts)
 				.finally(() => setLoading(false));
 		}, [user]);
+
+		const onDragStart = (e: React.DragEvent, id: string) => {
+			setDraggingId(id);
+			try { e.dataTransfer?.setData('text/plain', id); e.dataTransfer!.effectAllowed = 'move'; } catch {}
+		};
+
+		const onDragOverItem = (e: React.DragEvent) => {
+			e.preventDefault();
+		};
+
+		const onDropAt = async (e: React.DragEvent, toIdx: number) => {
+			e.preventDefault();
+			const id = draggingId ?? e.dataTransfer?.getData('text/plain');
+			if (!id) return;
+			const current: ProductWithPos[] = products as ProductWithPos[];
+			const fromIdx = current.findIndex(p => p.id === id);
+			if (fromIdx === -1) return;
+			if (fromIdx === toIdx) { setDraggingId(null); return; }
+
+			// Normalize positions if missing
+			const normalized: ProductWithPos[] = current.map((p, i) => ({ ...p, position: typeof p.position === 'number' ? p.position : i }));
+
+			const item = normalized.splice(fromIdx, 1)[0];
+			normalized.splice(toIdx, 0, item);
+
+			// Reassign positions sequentially
+			const updated = normalized.map((p, i) => ({ ...p, position: i }));
+
+			// Optimistic UI update
+			setProducts(updated as Product[]);
+
+			// Persist positions
+			setLoading(true);
+			try {
+				await Promise.all(updated.map(p => updateProduct(p.id, { position: p.position } as unknown as Record<string, unknown>)));
+			} catch (err) {
+				console.error('Error persisting drag order', err);
+			} finally {
+				setLoading(false);
+				setDraggingId(null);
+			}
+		};
+
+
 			// Tipo para el formulario del admin que incluye campos administrativos
 			type AdminProductForm = Partial<Product> & { codigo?: string; costo?: number };
 			const [form, setForm] = useState<AdminProductForm>({});
@@ -266,8 +315,8 @@ export default function AdminPage() {
 				<h3 className="font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Productos existentes</h3>
 				{loading && <div className="text-neutral-700 dark:text-neutral-300 mb-2">Cargando...</div>}
 					<ul ref={listRef} className="divide-y divide-gray-100 dark:divide-neutral-800">
-						{products.map((prod) => (
-							<li id={`prod-${prod.id}`} key={prod.id} className={`flex items-center gap-4 py-4 ${highlightedId === prod.id ? 'bg-yellow-50' : ''}`}>
+						{products.map((prod, idx) => (
+							<li id={`prod-${prod.id}`} key={prod.id} draggable onDragStart={(e) => onDragStart(e, prod.id)} onDragOver={onDragOverItem} onDrop={(e) => onDropAt(e, idx)} className={`flex items-center gap-4 py-4 ${highlightedId === prod.id ? 'bg-yellow-50' : ''}`}>
 							<Image
 								src={prod.image}
 								alt={prod.name}
@@ -279,7 +328,7 @@ export default function AdminPage() {
 									<div className="font-semibold text-neutral-900 dark:text-neutral-100">{prod.name}</div>
 									<div className="text-neutral-700 dark:text-neutral-300 text-sm">{prod.category}</div>
 								</div>
-							<button onClick={() => handleDelete(prod.id)} className="ml-2 text-red-500 hover:underline" disabled={loading}>Eliminar</button>
+						<button onClick={() => handleDelete(prod.id)} className="ml-2 text-red-500 hover:underline" disabled={loading}>Eliminar</button>
 						</li>
 					))}
 					</ul>
