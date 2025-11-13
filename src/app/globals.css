@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: #fff;
+  color: var(--foreground);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Frosted glass efecto neutro */
+.frosted {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px 0 rgba(30,30,30,0.07);
+  border-radius: 1rem;
+}
+
+.fancy-shadow {
+  box-shadow: 0 2px 16px 0 rgba(30,30,30,0.10), 0 1.5px 4px 0 rgba(30,30,30,0.04);
+}
+
+.accent-border {
+  border: 1.5px solid #e5e7eb;
+}
+
+
+/* Botón minimalista neutro */
+.btn-ice {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(30,30,30,0.08);
+}
+.btn-ice:hover {
+  background: #222;
+  box-shadow: 0 4px 16px 0 rgba(30,30,30,0.16);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.card-hover:hover {
+  box-shadow: 0 8px 32px 0 rgba(30,30,30,0.13);
+  transform: translateY(-2px) scale(1.01);
+  border-color: #bdbdbd;
+  /* Sin desenfoque extra en hover */
+}
